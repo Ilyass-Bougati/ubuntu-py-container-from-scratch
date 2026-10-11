@@ -1,16 +1,17 @@
 import sys
 import os
+import json
 import socket
 import ctypes
 from pathlib import Path
 
-MAX_MEMORY = 10048576
 MS_REC = 16384
 MS_PRIVATE = 262144
 FS_ROOT = "fs"
 FS_DIR = "/"
 CONTAINER_HOSTNAME = "py-container"
 CGROUP_DIR = "/sys/fs/cgroup"
+CGROUP_CONFIG = "cgroup.json"
 PROCESS_CGROUP_DIR = f"{CGROUP_DIR}/{CONTAINER_HOSTNAME}"
 libc = ctypes.CDLL("libc.so.6", use_errno=True)
 
@@ -19,8 +20,10 @@ def init_cgroup():
     if not CONTAINER_HOSTNAME in l:
         os.mkdir(PROCESS_CGROUP_DIR)
 
-    # setting the max memory
-    Path(f"{PROCESS_CGROUP_DIR}/memory.max").write_text(str(MAX_MEMORY))
+    # writing each value from the config into its cgroup file
+    limits = json.loads(Path(CGROUP_CONFIG).read_text())
+    for file, value in limits.items():
+        Path(f"{PROCESS_CGROUP_DIR}/{file}").write_text(str(value))
 
 def run():
     os.unshare(os.CLONE_NEWUTS | os.CLONE_NEWPID | os.CLONE_NEWNS)

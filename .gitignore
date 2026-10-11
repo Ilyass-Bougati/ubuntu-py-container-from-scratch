@@ -1,3 +1,4 @@
 ubuntu-base*
 .venv
 fs/
+__pycache__/
